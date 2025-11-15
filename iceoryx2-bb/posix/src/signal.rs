@@ -270,7 +270,23 @@ impl Drop for SignalGuard {
     }
 }
 
+#[cfg(not(all(test, loom)))]
 static LAST_SIGNAL: IoxAtomicUsize = IoxAtomicUsize::new(posix::MAX_SIGNAL_VALUE);
+#[cfg(all(test, loom))]
+static LAST_SIGNAL: std::sync::LazyLock<IoxAtomicUsize> =
+    std::sync::LazyLock::new(|| IoxAtomicUsize::new(posix::MAX_SIGNAL_VALUE));
+
+#[cfg(not(all(test, loom)))]
+#[inline(always)]
+fn last_signal() -> &'static IoxAtomicUsize {
+    &LAST_SIGNAL
+}
+
+#[cfg(all(test, loom))]
+#[inline(always)]
+fn last_signal() -> &'static IoxAtomicUsize {
+    &LAST_SIGNAL
+}
 
 /// Manages POSIX signal handling. It provides an interface to register custom callbacks for
 /// signals, to perform a blocking wait until a certain signal arrived (for instance like CTRL+c) and
@@ -313,7 +329,7 @@ extern "C" fn handler(signal: posix::int) {
 }
 
 extern "C" fn capture_signal(signal: posix::int) {
-    LAST_SIGNAL.store(signal as usize, Ordering::Relaxed);
+    last_signal().store(signal as usize, Ordering::Relaxed);
 }
 
 impl Drop for SignalHandler {
@@ -379,12 +395,12 @@ impl SignalHandler {
     pub fn call_and_fetch<F: FnOnce()>(call: F) -> Option<NonFatalFetchableSignal> {
         {
             let _sighandle = Self::instance();
-            LAST_SIGNAL.store(posix::MAX_SIGNAL_VALUE, Ordering::Relaxed);
+            last_signal().store(posix::MAX_SIGNAL_VALUE, Ordering::Relaxed);
 
             call();
         }
 
-        match LAST_SIGNAL.load(Ordering::Relaxed) {
+        match last_signal().load(Ordering::Relaxed) {
             posix::MAX_SIGNAL_VALUE => None,
             v => Some((v as i32).into()),
         }
@@ -394,7 +410,7 @@ impl SignalHandler {
     /// return [`None`] on the next call when no new signal was raised again.
     pub fn last_signal() -> Option<NonFatalFetchableSignal> {
         Self::instance();
-        match LAST_SIGNAL.swap(posix::MAX_SIGNAL_VALUE, Ordering::Relaxed) {
+        match last_signal().swap(posix::MAX_SIGNAL_VALUE, Ordering::Relaxed) {
             posix::MAX_SIGNAL_VALUE => None,
             v => Some((v as i32).into()),
         }
@@ -433,10 +449,10 @@ impl SignalHandler {
             .clock_type(ClockType::Monotonic)
             .create(), "{} since the underlying adaptive wait could not be created.", msg);
 
-        LAST_SIGNAL.store(posix::MAX_SIGNAL_VALUE, Ordering::Relaxed);
+        last_signal().store(posix::MAX_SIGNAL_VALUE, Ordering::Relaxed);
         fail!(from "Signal::wait_for_multiple_signals", when wait.wait_while(|| {
             !signals
-                .iter().any(|e| *e as i32 == LAST_SIGNAL.load(Ordering::Relaxed) as i32)
+                .iter().any(|e| *e as i32 == last_signal().load(Ordering::Relaxed) as i32)
         }), "Failed to wait for signal in SignalHandler.");
 
         Ok(())
@@ -484,10 +500,10 @@ impl SignalHandler {
         let start = fail!(from "Signal::timed_wait_for_multiple_signals", when Time::now_with_clock(ClockType::Monotonic),
                     "Failed to acquire current time.");
 
-        LAST_SIGNAL.store(posix::MAX_SIGNAL_VALUE, Ordering::Relaxed);
+        last_signal().store(posix::MAX_SIGNAL_VALUE, Ordering::Relaxed);
         loop {
             for signal in signals {
-                if *signal as i32 == LAST_SIGNAL.load(Ordering::Relaxed) as i32 {
+                if *signal as i32 == last_signal().load(Ordering::Relaxed) as i32 {
                     return Ok(Some(*signal));
                 }
             }

@@ -151,6 +151,7 @@ impl Errno {
     }
 }
 
+#[cfg(not(all(test, loom)))]
 pub unsafe fn strerror_r(errnum: int, buf: *mut c_char, buflen: size_t) -> int {
     use core::sync::atomic::Ordering;
     use iceoryx2_pal_concurrency_sync::iox_atomic::IoxAtomicBool;
@@ -166,6 +167,17 @@ pub unsafe fn strerror_r(errnum: int, buf: *mut c_char, buflen: size_t) -> int {
 
     IS_LOCKED.store(false, Ordering::Relaxed);
 
+    0
+}
+
+#[cfg(all(test, loom))]
+pub unsafe fn strerror_r(errnum: int, buf: *mut c_char, buflen: size_t) -> int {
+    // For loom testing, we skip the locking mechanism since loom's atomics
+    // don't support const initialization required for statics.
+    // This is acceptable because strerror_r is not the code being tested
+    // in loom tests, and loom provides its own threading model.
+    let raw_string = strerror(errnum);
+    crate::posix::string::strncpy(buf, raw_string, buflen);
     0
 }
 

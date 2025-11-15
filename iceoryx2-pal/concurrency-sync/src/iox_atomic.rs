@@ -14,54 +14,118 @@ use core::{
     cell::UnsafeCell,
     fmt::Debug,
     ops::{AddAssign, BitAndAssign, BitOrAssign, BitXorAssign, Not, SubAssign},
-    sync::atomic::Ordering,
 };
+
+#[cfg(not(all(test, loom)))]
+pub use core::sync::atomic::Ordering;
+#[cfg(all(test, loom))]
+pub use loom::sync::atomic::Ordering;
+
+#[cfg(not(all(test, loom)))]
+pub use core::sync::atomic::fence;
+#[cfg(all(test, loom))]
+pub use loom::sync::atomic::fence;
 
 use crate::{rwlock::RwLockWriterPreference, WaitAction};
 
 /// Behaves like [`core::sync::atomic::AtomicBool`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicBool = core::sync::atomic::AtomicBool;
 
+/// Behaves like [`loom::sync::atomic::AtomicBool`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicBool = loom::sync::atomic::AtomicBool;
+
 /// Behaves like [`core::sync::atomic::AtomicUsize`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicUsize = core::sync::atomic::AtomicUsize;
 
+/// Behaves like [`loom::sync::atomic::AtomicUsize`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicUsize = loom::sync::atomic::AtomicUsize;
+
 /// Behaves like [`core::sync::atomic::AtomicIsize`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicIsize = core::sync::atomic::AtomicIsize;
 
+/// Behaves like [`loom::sync::atomic::AtomicIsize`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicIsize = loom::sync::atomic::AtomicIsize;
+
 /// Behaves like [`core::sync::atomic::AtomicU8`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicU8 = core::sync::atomic::AtomicU8;
 
+/// Behaves like [`loom::sync::atomic::AtomicU8`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicU8 = loom::sync::atomic::AtomicU8;
+
 /// Behaves like [`core::sync::atomic::AtomicU16`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicU16 = core::sync::atomic::AtomicU16;
 
+/// Behaves like [`loom::sync::atomic::AtomicU16`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicU16 = loom::sync::atomic::AtomicU16;
+
 /// Behaves like [`core::sync::atomic::AtomicU32`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicU32 = core::sync::atomic::AtomicU32;
 
+/// Behaves like [`loom::sync::atomic::AtomicU32`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicU32 = loom::sync::atomic::AtomicU32;
+
 /// Behaves like [`core::sync::atomic::AtomicI8`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicI8 = core::sync::atomic::AtomicI8;
 
+/// Behaves like [`loom::sync::atomic::AtomicI8`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicI8 = loom::sync::atomic::AtomicI8;
+
 /// Behaves like [`core::sync::atomic::AtomicI16`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicI16 = core::sync::atomic::AtomicI16;
 
+/// Behaves like [`loom::sync::atomic::AtomicI16`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicI16 = loom::sync::atomic::AtomicI16;
+
 /// Behaves like [`core::sync::atomic::AtomicI32`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicI32 = core::sync::atomic::AtomicI32;
 
+/// Behaves like [`loom::sync::atomic::AtomicI32`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicI32 = loom::sync::atomic::AtomicI32;
+
 /// Behaves like [`core::sync::atomic::AtomicI64`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicI64 = core::sync::atomic::AtomicI64;
 
+/// Behaves like [`loom::sync::atomic::AtomicI64`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicI64 = loom::sync::atomic::AtomicI64;
+
 /// Behaves like [`core::sync::atomic::AtomicU64`]
+#[cfg(not(all(test, loom)))]
 #[allow(clippy::disallowed_types)]
 pub type IoxAtomicU64 = core::sync::atomic::AtomicU64;
+
+/// Behaves like [`loom::sync::atomic::AtomicU64`] when loom feature is enabled
+#[cfg(all(test, loom))]
+pub type IoxAtomicU64 = loom::sync::atomic::AtomicU64;
 
 type LockType = RwLockWriterPreference;
 
@@ -157,7 +221,17 @@ impl<T: internal::AtomicInteger> Debug for IoxAtomic<T> {
 
 impl<T: internal::AtomicInteger> IoxAtomic<T> {
     /// See [`core::sync::atomic::AtomicU64::new()`]
+    #[cfg(not(all(test, loom)))]
     pub const fn new(v: T) -> Self {
+        Self {
+            data: UnsafeCell::new(v),
+            lock: LockType::new(),
+        }
+    }
+
+    /// See [`core::sync::atomic::AtomicU64::new()`]
+    #[cfg(all(test, loom))]
+    pub fn new(v: T) -> Self {
         Self {
             data: UnsafeCell::new(v),
             lock: LockType::new(),
@@ -193,13 +267,13 @@ impl<T: internal::AtomicInteger> IoxAtomic<T> {
         self.write_lock();
         let data = unsafe { *self.data.get() };
         if data != current {
-            core::sync::atomic::fence(Ordering::SeqCst);
+            fence(Ordering::SeqCst);
             self.unlock();
             return Err(data);
         }
 
         unsafe { *self.data.get() = new };
-        core::sync::atomic::fence(Ordering::SeqCst);
+        fence(Ordering::SeqCst);
         self.unlock();
         Ok(data)
     }
@@ -218,7 +292,7 @@ impl<T: internal::AtomicInteger> IoxAtomic<T> {
     fn fetch_op<F: FnOnce() -> T>(&self, op: F, _order: Ordering) -> T {
         self.write_lock();
         let data = op();
-        core::sync::atomic::fence(Ordering::SeqCst);
+        fence(Ordering::SeqCst);
         self.unlock();
         data
     }
@@ -320,12 +394,12 @@ impl<T: internal::AtomicInteger> IoxAtomic<T> {
         match f(data) {
             Some(v) => {
                 unsafe { *self.data.get() = v };
-                core::sync::atomic::fence(Ordering::SeqCst);
+                fence(Ordering::SeqCst);
                 self.unlock();
                 Ok(data)
             }
             None => {
-                core::sync::atomic::fence(Ordering::SeqCst);
+                fence(Ordering::SeqCst);
                 self.unlock();
                 Err(data)
             }
@@ -353,7 +427,7 @@ impl<T: internal::AtomicInteger> IoxAtomic<T> {
     pub fn load(&self, _order: Ordering) -> T {
         self.read_lock();
         let data = unsafe { *self.data.get() };
-        core::sync::atomic::fence(Ordering::SeqCst);
+        fence(Ordering::SeqCst);
         self.unlock();
         data
     }
@@ -362,7 +436,7 @@ impl<T: internal::AtomicInteger> IoxAtomic<T> {
     pub fn store(&self, value: T, _order: Ordering) {
         self.write_lock();
         unsafe { *self.data.get() = value };
-        core::sync::atomic::fence(Ordering::SeqCst);
+        fence(Ordering::SeqCst);
         self.unlock();
     }
 
@@ -371,7 +445,7 @@ impl<T: internal::AtomicInteger> IoxAtomic<T> {
         self.write_lock();
         let data = unsafe { *self.data.get() };
         unsafe { *self.data.get() = value };
-        core::sync::atomic::fence(Ordering::SeqCst);
+        fence(Ordering::SeqCst);
         self.unlock();
         data
     }
