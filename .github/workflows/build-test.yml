@@ -2,10 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # branches: [main]
   pull_request:
-    branches: [main, release*]
-    types: [opened, ready_for_review, reopened, synchronize]
+    # branches: [main, release*]
+    # types: [opened, ready_for_review, reopened, synchronize]
 
 # env:
 # RUSTFLAGS: "-C debug-assertions"
@@ -189,6 +189,25 @@ jobs:
           cache-key: cache-2-${{ runner.os }}-cargo-nextest
           artifact-bin-name: cargo-nextest
           artifact-upload-name: ${{ runner.os }}-cargo-nextest
+
+  loom-tests:
+    # needs: [preflight-check, static-code-analysis]
+    # if: ${{ needs.changes.outputs.source-code == 'true' }}
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@888c2e1ea69ab0d4330cbf0af1ecc7b68f368cc1 # ratchet:dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Run loom tests
+        env:
+          RUSTFLAGS: "--cfg loom"
+        run: cargo test --package iceoryx2-bb-lock-free
 
   python-bindings:
     needs: [preflight-check, static-code-analysis, cargo-nextest]
