@@ -10,12 +10,16 @@ repository = { workspace = true }
 rust-version = { workspace = true }
 version = { workspace = true }
 
+[lints]
+workspace = true
+
 [features]
 default = []
 std = []
 
-[dependencies]
-
 [dev-dependencies]
 iceoryx2-pal-testing = { workspace = true }
 generic-tests = { workspace = true }
+
+[target.'cfg(loom)'.dev-dependencies]
+loom = { version = "0.7" }

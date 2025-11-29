@@ -2,10 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # branches: [main]
   pull_request:
-    branches: [main, release*]
-    types: [opened, ready_for_review, reopened, synchronize]
+    # branches: [main, release*]
+    # types: [opened, ready_for_review, reopened, synchronize]
 
 # env:
 # RUSTFLAGS: "-C debug-assertions"

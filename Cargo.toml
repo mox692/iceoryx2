@@ -161,3 +161,8 @@ strip = true
 lto = true
 # opt-level = "z"
 panic = "abort"
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+  'cfg(loom)',
+] }
