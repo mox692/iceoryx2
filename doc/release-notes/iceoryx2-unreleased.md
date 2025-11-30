@@ -12,10 +12,15 @@
 -->
 * Android proof of concept with `local` communication
   [#416](https://github.com/eclipse-iceoryx/iceoryx2/issues/416)
+* C, C++, and Python language bindings for blackboard
+  [#817](https://github.com/eclipse-iceoryx/iceoryx2/issues/817)
 * `iox2 config explain` cli command for config descriptions
   [#832](https://github.com/eclipse-iceoryx/iceoryx2/issues/832)
 * Add traits to facilitate implementation of custom tunnelling mechanisms
   [#845](https://github.com/eclipse-iceoryx/iceoryx2/issues/845)
+* Add support for `no_std` builds that can be enabled by disabling the new
+  `std` feature when building `iceoryx2`
+  [#865](https://github.com/eclipse-iceoryx/iceoryx2/issues/865)
 * Add a C++ string container type with fixed compile-time capacity
   [#938](https://github.com/eclipse-iceoryx/iceoryx2/issues/938)
 * Add a C++ vector container type with fixed compile-time capacity
@@ -37,6 +42,8 @@
   [#1114](https://github.com/eclipse-iceoryx/iceoryx2/issues/1114)
 * Support `unions` with `ZeroCopySend`
   [#1144](https://github.com/eclipse-iceoryx/iceoryx2/issues/1144)
+* Add option to provide custom `iceoryx2-pal-configuration`
+  [#1176](https://github.com/eclipse-iceoryx/iceoryx2/issues/1176)
 
 ### Bugfixes
 
@@ -60,6 +67,8 @@
     [#1171](https://github.com/eclipse-iceoryx/iceoryx2/issues/1171)
 * Fix C binding linker error on QNX
     [#1174](https://github.com/eclipse-iceoryx/iceoryx2/issues/1116)
+* Fix panic during cleanup
+    [#1198](https://github.com/eclipse-iceoryx/iceoryx2/issues/1198)
 
 ### Refactoring
 
@@ -70,6 +79,8 @@
 
 * Decoupled tunnel implementation from tunelling mechanism
     [#845](https://github.com/eclipse-iceoryx/iceoryx2/issues/845)
+* Factored out platform-specific build logic from common logic
+    [#865](https://github.com/eclipse-iceoryx/iceoryx2/issues/865)
 * Explicitly use components from `core` and `alloc` in all Rust code
     [#865](https://github.com/eclipse-iceoryx/iceoryx2/issues/865)
 * Enable -Wconversion warning for the C and C++ code
@@ -193,3 +204,6 @@
    let mut tunnel =
        Tunnel::<Service, Backend>::create(&tunnel_config, &iceoryx_config, &backend_config).unwrap();
    ```
+
+6. Removed the `cdr` serializer from `iceoryx2-cal`, it is recommended to
+   switch to the `postcard` serializer in its place

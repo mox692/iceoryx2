@@ -65,6 +65,13 @@ add_param(
 message(STATUS "[i] iceoryx2 dev setup Rust feature flags (only used when 'RUST_BUILD_ARTIFACT_PATH' is not set):")
 
 add_rust_feature(
+    NAME IOX2_FEATURE_STD
+    DESCRIPTION "Build iceoryx2 with std library."
+    DEFAULT_VALUE ON
+    RUST_FEATURE "std"
+)
+
+add_rust_feature(
     NAME IOX2_FEATURE_DEV_PERMISSIONS
     DESCRIPTION "The permissions of all resources will be set to read, write, execute for everyone."
     DEFAULT_VALUE OFF
@@ -90,6 +97,13 @@ add_rust_feature(
     DESCRIPTION "Enables https://crates.io/crates/tracing as default logger"
     DEFAULT_VALUE OFF
     RUST_FEATURE "iceoryx2/logger_tracing"
+)
+
+add_rust_feature(
+    NAME IOX2_CUSTOM_PAL_CONFIG
+    DESCRIPTION "Uses a custom Platform Abstraction Layer Config defined in the 'IOX2_CUSTOM_PAL_CONFIG_PATH' env variable"
+    DEFAULT_VALUE OFF
+    RUST_FEATURE "iceoryx2/custom_pal_config"
 )
 
 # END Options, Params and Feature Flags
