@@ -270,10 +270,10 @@ impl Drop for SignalGuard {
     }
 }
 
-#[cfg(not(all(test, loom)))]
+#[cfg(not(all(test, loom, feature = "std")))]
 static LAST_SIGNAL: IoxAtomicUsize = IoxAtomicUsize::new(posix::MAX_SIGNAL_VALUE);
 
-#[cfg(all(test, loom))]
+#[cfg(all(test, loom, feature = "std"))]
 static LAST_SIGNAL: std::sync::LazyLock<IoxAtomicUsize> = std::sync::LazyLock::new(|| {
     unimplemented!("loom does not provide const-initialization for atomic variables.")
 });

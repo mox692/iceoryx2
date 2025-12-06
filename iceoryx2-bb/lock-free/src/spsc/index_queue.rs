@@ -42,10 +42,10 @@
 //! }
 //! ```
 
-#[cfg(all(test, loom))]
+#[cfg(all(test, loom, feature = "std"))]
 use loom::cell::UnsafeCell;
 
-#[cfg(not(all(test, loom)))]
+#[cfg(not(all(test, loom, feature = "std")))]
 use core::cell::UnsafeCell;
 
 use core::{alloc::Layout, fmt::Debug};
@@ -205,11 +205,11 @@ pub mod details {
                 .as_ptr()
                 .add((position % self.capacity as u64) as usize);
 
-            #[cfg(all(test, loom))]
+            #[cfg(all(test, loom, feature = "std"))]
             {
                 cell.get_mut().deref() as *mut u64
             }
-            #[cfg(not(all(test, loom)))]
+            #[cfg(not(all(test, loom, feature = "std")))]
             {
                 cell.get()
             }

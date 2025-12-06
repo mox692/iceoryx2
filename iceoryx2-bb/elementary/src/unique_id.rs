@@ -75,9 +75,9 @@ pub struct UniqueId {
 
 impl Default for UniqueId {
     fn default() -> Self {
-        #[cfg(not(all(test, loom)))]
+        #[cfg(not(all(test, loom, feature = "std")))]
         static COUNTER: IoxAtomicU64 = IoxAtomicU64::new(0);
-        #[cfg(all(test, loom))]
+        #[cfg(all(test, loom, feature = "std"))]
         static COUNTER: std::sync::LazyLock<IoxAtomicU64> = std::sync::LazyLock::new(|| {
             unimplemented!("loom does not provide const-initialization for atomic variables.")
         });
@@ -110,9 +110,9 @@ pub struct TypedUniqueId<T> {
 
 impl<T> Default for TypedUniqueId<T> {
     fn default() -> Self {
-        #[cfg(not(all(test, loom)))]
+        #[cfg(not(all(test, loom, feature = "std")))]
         static COUNTER: IoxAtomicU64 = IoxAtomicU64::new(0);
-        #[cfg(all(test, loom))]
+        #[cfg(all(test, loom, feature = "std"))]
         static COUNTER: std::sync::LazyLock<IoxAtomicU64> = std::sync::LazyLock::new(|| {
             unimplemented!("loom does not provide const-initialization for atomic variables.")
         });

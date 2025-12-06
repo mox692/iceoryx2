@@ -63,7 +63,7 @@ impl Default for Once {
 
 impl Once {
     /// Creates a new `Once` in the uninitialized state.
-    #[cfg(not(all(test, loom)))]
+    #[cfg(not(all(test, loom, feature = "std")))]
     pub const fn new() -> Self {
         Self {
             state: IoxAtomicU8::new(State::Incomplete as u8),
@@ -71,7 +71,7 @@ impl Once {
     }
 
     /// Creates a new `Once` in the uninitialized state.
-    #[cfg(all(test, loom))]
+    #[cfg(all(test, loom, feature = "std"))]
     pub fn new() -> Self {
         Self {
             state: IoxAtomicU8::new(State::Incomplete as u8),
