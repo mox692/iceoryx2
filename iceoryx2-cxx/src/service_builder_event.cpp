@@ -51,10 +51,8 @@ void ServiceBuilderEvent<S>::set_parameters() {
 
     if (m_verify_deadline) {
         m_deadline
-            .and_then([&](auto value) -> auto {
-                auto duration = value.timespec();
-                iox2_service_builder_event_set_deadline(
-                    &m_handle, static_cast<uint64_t>(duration.tv_sec), static_cast<uint32_t>(duration.tv_nsec));
+            .and_then([&](auto duration) -> auto {
+                iox2_service_builder_event_set_deadline(&m_handle, duration.as_secs(), duration.subsec_nanos());
             })
             .or_else([&]() -> auto { iox2_service_builder_event_disable_deadline(&m_handle); });
     }
@@ -87,7 +85,7 @@ auto ServiceBuilderEvent<S>::notifier_dead_event(EventId event_id) && -> Service
 
 
 template <ServiceType S>
-auto ServiceBuilderEvent<S>::deadline(iox::units::Duration deadline) && -> ServiceBuilderEvent&& {
+auto ServiceBuilderEvent<S>::deadline(iox2::bb::Duration deadline) && -> ServiceBuilderEvent&& {
     m_deadline.emplace(deadline);
     m_verify_deadline = true;
     return std::move(*this);
@@ -122,49 +120,51 @@ auto ServiceBuilderEvent<S>::disable_deadline() && -> ServiceBuilderEvent&& {
 }
 
 template <ServiceType S>
-auto ServiceBuilderEvent<S>::open_or_create() && -> iox::expected<PortFactoryEvent<S>, EventOpenOrCreateError> {
+auto ServiceBuilderEvent<S>::open_or_create() && -> iox2::legacy::expected<PortFactoryEvent<S>,
+                                                                           EventOpenOrCreateError> {
     set_parameters();
     iox2_port_factory_event_h event_handle {};
     auto result = iox2_service_builder_event_open_or_create(m_handle, nullptr, &event_handle);
 
     if (result == IOX2_OK) {
-        return iox::ok(PortFactoryEvent<S>(event_handle));
+        return iox2::legacy::ok(PortFactoryEvent<S>(event_handle));
     }
 
-    return iox::err(iox::into<EventOpenOrCreateError>(result));
+    return iox2::legacy::err(iox2::bb::into<EventOpenOrCreateError>(result));
 }
 
 template <ServiceType S>
-auto ServiceBuilderEvent<S>::open() && -> iox::expected<PortFactoryEvent<S>, EventOpenError> {
+auto ServiceBuilderEvent<S>::open() && -> iox2::legacy::expected<PortFactoryEvent<S>, EventOpenError> {
     set_parameters();
 
     iox2_port_factory_event_h event_handle {};
     auto result = iox2_service_builder_event_open(m_handle, nullptr, &event_handle);
 
     if (result == IOX2_OK) {
-        return iox::ok(PortFactoryEvent<S>(event_handle));
+        return iox2::legacy::ok(PortFactoryEvent<S>(event_handle));
     }
 
-    return iox::err(iox::into<EventOpenError>(result));
+    return iox2::legacy::err(iox2::bb::into<EventOpenError>(result));
 }
 
 template <ServiceType S>
-auto ServiceBuilderEvent<S>::create() && -> iox::expected<PortFactoryEvent<S>, EventCreateError> {
+auto ServiceBuilderEvent<S>::create() && -> iox2::legacy::expected<PortFactoryEvent<S>, EventCreateError> {
     set_parameters();
 
     iox2_port_factory_event_h event_handle {};
     auto result = iox2_service_builder_event_create(m_handle, nullptr, &event_handle);
 
     if (result == IOX2_OK) {
-        return iox::ok(PortFactoryEvent<S>(event_handle));
+        return iox2::legacy::ok(PortFactoryEvent<S>(event_handle));
     }
 
-    return iox::err(iox::into<EventCreateError>(result));
+    return iox2::legacy::err(iox2::bb::into<EventCreateError>(result));
 }
 
 template <ServiceType S>
 auto ServiceBuilderEvent<S>::open_or_create_with_attributes(
-    const AttributeVerifier& required_attributes) && -> iox::expected<PortFactoryEvent<S>, EventOpenOrCreateError> {
+    const AttributeVerifier&
+        required_attributes) && -> iox2::legacy::expected<PortFactoryEvent<S>, EventOpenOrCreateError> {
     set_parameters();
 
     iox2_port_factory_event_h event_handle {};
@@ -172,15 +172,15 @@ auto ServiceBuilderEvent<S>::open_or_create_with_attributes(
         m_handle, &required_attributes.m_handle, nullptr, &event_handle);
 
     if (result == IOX2_OK) {
-        return iox::ok(PortFactoryEvent<S>(event_handle));
+        return iox2::legacy::ok(PortFactoryEvent<S>(event_handle));
     }
 
-    return iox::err(iox::into<EventOpenOrCreateError>(result));
+    return iox2::legacy::err(iox2::bb::into<EventOpenOrCreateError>(result));
 }
 
 template <ServiceType S>
 auto ServiceBuilderEvent<S>::open_with_attributes(
-    const AttributeVerifier& required_attributes) && -> iox::expected<PortFactoryEvent<S>, EventOpenError> {
+    const AttributeVerifier& required_attributes) && -> iox2::legacy::expected<PortFactoryEvent<S>, EventOpenError> {
     set_parameters();
 
     iox2_port_factory_event_h event_handle {};
@@ -188,15 +188,15 @@ auto ServiceBuilderEvent<S>::open_with_attributes(
         m_handle, &required_attributes.m_handle, nullptr, &event_handle);
 
     if (result == IOX2_OK) {
-        return iox::ok(PortFactoryEvent<S>(event_handle));
+        return iox2::legacy::ok(PortFactoryEvent<S>(event_handle));
     }
 
-    return iox::err(iox::into<EventOpenError>(result));
+    return iox2::legacy::err(iox2::bb::into<EventOpenError>(result));
 }
 
 template <ServiceType S>
 auto ServiceBuilderEvent<S>::create_with_attributes(
-    const AttributeSpecifier& attributes) && -> iox::expected<PortFactoryEvent<S>, EventCreateError> {
+    const AttributeSpecifier& attributes) && -> iox2::legacy::expected<PortFactoryEvent<S>, EventCreateError> {
     set_parameters();
 
     iox2_port_factory_event_h event_handle {};
@@ -204,10 +204,10 @@ auto ServiceBuilderEvent<S>::create_with_attributes(
         iox2_service_builder_event_create_with_attributes(m_handle, &attributes.m_handle, nullptr, &event_handle);
 
     if (result == IOX2_OK) {
-        return iox::ok(PortFactoryEvent<S>(event_handle));
+        return iox2::legacy::ok(PortFactoryEvent<S>(event_handle));
     }
 
-    return iox::err(iox::into<EventCreateError>(result));
+    return iox2::legacy::err(iox2::bb::into<EventCreateError>(result));
 }
 
 template class ServiceBuilderEvent<ServiceType::Ipc>;

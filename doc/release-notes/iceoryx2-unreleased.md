@@ -44,6 +44,10 @@
   [#1144](https://github.com/eclipse-iceoryx/iceoryx2/issues/1144)
 * Add option to provide custom `iceoryx2-pal-configuration`
   [#1176](https://github.com/eclipse-iceoryx/iceoryx2/issues/1176)
+* Add option to provide custom `iceoryx2-pal-posix`
+  [#1176](https://github.com/eclipse-iceoryx/iceoryx2/issues/1176)
+* Enable Bazel `bzlmod` support for iceoryx2 builds
+  [#355](https://github.com/eclipse-iceoryx/iceoryx2/issues/355)
 
 ### Bugfixes
 
@@ -69,6 +73,8 @@
     [#1174](https://github.com/eclipse-iceoryx/iceoryx2/issues/1116)
 * Fix panic during cleanup
     [#1198](https://github.com/eclipse-iceoryx/iceoryx2/issues/1198)
+* Update urllib3 dependency to 2.6.0 (security issue in 2.5.0)
+    [#1228](https://github.com/eclipse-iceoryx/iceoryx2/issues/1228)
 
 ### Refactoring
 
@@ -77,6 +83,8 @@
     conflicts when merging.
 -->
 
+* Integrate the iceoryx_hoofs subset directly into the iceoryx2 repository
+    [#301](https://github.com/eclipse-iceoryx/iceoryx2/issues/301)
 * Decoupled tunnel implementation from tunelling mechanism
     [#845](https://github.com/eclipse-iceoryx/iceoryx2/issues/845)
 * Factored out platform-specific build logic from common logic
@@ -94,12 +102,14 @@
 
 ### Workflow
 
-<!--
-    NOTE: Add new entries sorted by issue number to minimize the possibility of
-    conflicts when merging.
--->
+1. **iceoryx_hoofs** dependency
 
-* Example text [#1](https://github.com/eclipse-iceoryx/iceoryx2/issues/1)
+The `iceoryx_hoofs` dependency was removed by importing the relevant files to
+the iceoryx2 repository. This simplifies the build process makes it trivial to
+add iceoryx2 specific features to the base lib.
+
+The files from the `iceoryx_hoofs` subset are available via the `iceoryx2-bb-cxx`
+CMake package.
 
 ### New API features
 
@@ -207,3 +217,21 @@
 
 6. Removed the `cdr` serializer from `iceoryx2-cal`, it is recommended to
    switch to the `postcard` serializer in its place
+
+7. Merged `iox2/semantic_string.hpp` with imported `iox2/bb/semantic_string.hpp`
+   from `iceoryx_hoofs`
+
+   With this merge, the `SemanticStringError` moved from the `iox2` namespace
+   into the `iox2::bb` namespace.
+
+   ```cpp
+   // old
+   #include "iox2/semantic_string.hpp"
+   // ...
+   auto foo() -> expected<void, iox2::SemanticStringError>
+
+   // new
+   #include "iox2/bb/semantic_string.hpp"
+   // ...
+   auto foo() -> expected<void, iox2::bb::SemanticStringError>
+   ```
