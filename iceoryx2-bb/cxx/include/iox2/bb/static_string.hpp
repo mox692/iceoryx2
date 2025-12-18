@@ -10,12 +10,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-#ifndef IOX2_INCLUDE_GUARD_CONTAINER_STATIC_STRING_HPP
-#define IOX2_INCLUDE_GUARD_CONTAINER_STATIC_STRING_HPP
+#ifndef IOX2_INCLUDE_GUARD_BB_STATIC_STRING_HPP
+#define IOX2_INCLUDE_GUARD_BB_STATIC_STRING_HPP
 
+#include "iox2/bb/detail/string_internal.hpp"
 #include "iox2/bb/optional.hpp"
 #include "iox2/bb/variation/optional.hpp"
-#include "iox2/container/detail/string_internal.hpp"
 #include "iox2/legacy/type_traits.hpp"
 
 #include <algorithm>
@@ -29,20 +29,27 @@
 namespace iox2 {
 namespace bb {
 template <uint64_t Capacity>
-using DoesContainInvalidCharacter = bool (*)(const container::StaticString<Capacity>& value);
+using DoesContainInvalidCharacter = bool (*)(const StaticString<Capacity>& value);
 
 template <uint64_t Capacity>
-using DoesContainInvalidContent = bool (*)(const container::StaticString<Capacity>& value);
+using DoesContainInvalidContent = bool (*)(const StaticString<Capacity>& value);
 
 template <typename, uint64_t Capacity, DoesContainInvalidContent<Capacity>, DoesContainInvalidCharacter<Capacity>>
 class SemanticString;
 
 namespace detail {
-template <uint64_t>
-class PathAndFileVerifier;
+/// @brief verifies if the given string is a valid path to a file
+/// @param[in] name the string to verify
+/// @return true if the string is a path to a file, otherwise false
+template <uint64_t StringCapacity>
+auto is_valid_path_to_file(const StaticString<StringCapacity>& name) noexcept -> bool;
+
+/// @brief returns true if the provided name is a valid path, otherwise false
+/// @param[in] name the string to verify
+template <uint64_t StringCapacity>
+auto is_valid_path_to_directory(const StaticString<StringCapacity>& name) noexcept -> bool;
+
 } // namespace detail
-} // namespace bb
-namespace container {
 
 template <uint64_t>
 class StaticString;
@@ -284,8 +291,8 @@ class StaticString {
     /// This class provides the interface for accessing individual code units of the string.
     class ConstAccessorCodeUnits {
         friend class StaticString;
-        template <uint64_t>
-        friend class bb::detail::PathAndFileVerifier;
+        friend auto bb::detail::is_valid_path_to_file<N>(const bb::StaticString<N>& name) noexcept -> bool;
+        friend auto bb::detail::is_valid_path_to_directory<N>(const bb::StaticString<N>& name) noexcept -> bool;
 
       private:
         StaticString const* m_parent;
@@ -316,8 +323,8 @@ class StaticString {
                 return bb::NULLOPT;
             }
 
-            auto str_data = detail::GetData<T>::call(str);
-            auto str_size = detail::GetSize<T>::call(str);
+            auto str_data = detail::get_data(str);
+            auto str_size = detail::get_size(str);
             for (auto position = pos; position < m_parent->m_size; ++position) {
                 auto found = memchr(str_data, m_parent->m_string[position], static_cast<size_t>(str_size));
                 if (found != nullptr) {
@@ -341,8 +348,8 @@ class StaticString {
             }
 
             auto position = std::min(static_cast<uint64_t>(pos), m_parent->m_size - 1);
-            auto str_data = detail::GetData<T>::call(str);
-            auto str_size = detail::GetSize<T>::call(str);
+            auto str_data = detail::get_data(str);
+            auto str_size = detail::get_size(str);
             for (; position > 0; --position) {
                 auto found = memchr(str_data, m_parent->m_string[position], str_size);
                 if (found != nullptr) {
@@ -697,14 +704,14 @@ class StaticString {
     }
 };
 
-} // namespace container
+} // namespace bb
 } // namespace iox2
 
 template <uint64_t N>
-auto operator<<(std::ostream& stream, const iox2::container::StaticString<N>& value) -> std::ostream& {
+auto operator<<(std::ostream& stream, const iox2::bb::StaticString<N>& value) -> std::ostream& {
     stream << "StaticString::<" << N << "> { m_size: " << value.size() << ", m_string: \""
            << value.unchecked_access().c_str() << "\" }";
     return stream;
 }
 
-#endif
+#endif // IOX2_INCLUDE_GUARD_BB_STATIC_STRING_HPP
