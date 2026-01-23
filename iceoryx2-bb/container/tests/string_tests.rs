@@ -10,13 +10,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-extern crate iceoryx2_loggers;
+extern crate iceoryx2_bb_loggers;
 
 use core::ops::DerefMut;
-use std::cell::UnsafeCell;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 
+use iceoryx2_bb_concurrency::cell::UnsafeCell;
 use iceoryx2_bb_container::string::{RelocatableString, *};
 use iceoryx2_bb_elementary::bump_allocator::BumpAllocator;
 use iceoryx2_bb_elementary_traits::relocatable_container::RelocatableContainer;

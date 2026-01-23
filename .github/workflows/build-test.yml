@@ -190,6 +190,25 @@ jobs:
           artifact-bin-name: cargo-nextest
           artifact-upload-name: ${{ runner.os }}-cargo-nextest
 
+  loom-tests:
+    needs: preflight-check
+    if: ${{ needs.changes.outputs.source-code == 'true' }}
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@888c2e1ea69ab0d4330cbf0af1ecc7b68f368cc1 # ratchet:dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Run loom tests
+        env:
+          RUSTFLAGS: "--cfg loom"
+        run: cargo test --package iceoryx2-bb-lock-free --features std --release
+
   python-bindings:
     needs: [preflight-check, static-code-analysis, cargo-nextest]
     if: ${{ needs.changes.outputs.source-code == 'true' }}
@@ -248,7 +267,7 @@ jobs:
         uses: dtolnay/rust-toolchain@888c2e1ea69ab0d4330cbf0af1ecc7b68f368cc1 # ratchet:dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
-          targets: i686-unknown-linux-gnu
+          targets: i686-unknown-linux-gnu, armv7r-none-eabihf
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -499,6 +518,10 @@ jobs:
           cd iceoryx2-ffi/c
           cargo rustc -q -- --print=native-static-libs
 
+      - name: Remove files to increase available disk space
+        shell: bash
+        run: rm -rf ${{ github.workspace }}/target/${{ matrix.mode.name }}/{deps,incremental}
+
       - name: Build language bindings
         shell: bash
         run: |
@@ -724,7 +747,10 @@ jobs:
         run: cargo build --package iceoryx2 --no-default-features
 
       - name: Build bare-metal examples (no_std)
-        run: cd examples/bare-metal/rust && cargo build && cd -
+        run: cd examples/nostd/bare-metal/rust && cargo build --examples && cd -
+
+      - name: Build posix examples (no_std)
+        run: cd examples/nostd/posix/rust && cargo build --examples && cd -
 
   x64_cxx_binding_vocabulary_types_variations:
     needs: [preflight-check, static-code-analysis, cargo-nextest]
@@ -778,7 +804,6 @@ jobs:
                 -DBUILD_EXAMPLES=ON \
                 -DBUILD_TESTING=ON \
                 -DRUST_BUILD_ARTIFACT_PATH=$(pwd)/target/debug \
-                -DIOX2_CXX_STD_VERSION=23 \
                 -DIOX2_BB_CXX_CONFIG_USE_STD_EXPECTED=ON \
                 -DIOX2_BB_CXX_CONFIG_USE_STD_OPTIONAL=OFF
           cmake --build target/ff/cc/build
@@ -801,7 +826,6 @@ jobs:
                 -DBUILD_EXAMPLES=ON \
                 -DBUILD_TESTING=ON \
                 -DRUST_BUILD_ARTIFACT_PATH=$(pwd)/target/debug \
-                -DIOX2_CXX_STD_VERSION=17 \
                 -DIOX2_BB_CXX_CONFIG_USE_STD_EXPECTED=OFF \
                 -DIOX2_BB_CXX_CONFIG_USE_STD_OPTIONAL=ON
           cmake --build target/ff/cc/build
@@ -824,9 +848,35 @@ jobs:
                 -DBUILD_EXAMPLES=ON \
                 -DBUILD_TESTING=ON \
                 -DRUST_BUILD_ARTIFACT_PATH=$(pwd)/target/debug \
-                -DIOX2_CXX_STD_VERSION=23 \
                 -DIOX2_BB_CXX_CONFIG_USE_STD_EXPECTED=ON \
                 -DIOX2_BB_CXX_CONFIG_USE_STD_OPTIONAL=ON
+          cmake --build target/ff/cc/build
+          cmake --install target/ff/cc/build --prefix target/ff/cc/install
+
+          target/ff/cc/build/tests/iceoryx2-bb-cxx-tests
+          target/ff/cc/build/tests/iceoryx2-cxx-tests
+
+          cmake -S examples/cxx \
+                -B target/ff/cc/out-of-tree \
+                -DCMAKE_PREFIX_PATH=${{ github.workspace }}/target/ff/cc/install
+          cmake --build target/ff/cc/out-of-tree
+
+          rm -rf target/ff/cc
+
+      - name: Build and test iceoryx2 C++ bindings with custom vocabulary types
+        run: |
+          cmake -S examples/cxx/custom_vocabulary_types  -B target/ff/cc/custom_vocabulary_types
+          cmake --build target/ff/cc/custom_vocabulary_types
+          cmake --install target/ff/cc/custom_vocabulary_types --prefix target/ff/cc/install
+
+          cmake -S . \
+                -B target/ff/cc/build \
+                -DBUILD_EXAMPLES=ON \
+                -DBUILD_TESTING=ON \
+                -DRUST_BUILD_ARTIFACT_PATH=$(pwd)/target/debug \
+                -DIOX2_BB_CXX_CONFIG_USE_CUSTOM_VOCABULARY_TYPES=ON \
+                -DIOX2_BB_CXX_CONFIG_CUSTOM_VOCABULARY_TYPES_CMAKE_TARGET="custom-vocabulary-types" \
+                -DCMAKE_PREFIX_PATH=${{ github.workspace }}/target/ff/cc/install
           cmake --build target/ff/cc/build
           cmake --install target/ff/cc/build --prefix target/ff/cc/install
 
@@ -854,8 +904,11 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Update iceoryx2 version
+        run: ./internal/scripts/update_versions.sh --iceoryx2 0.0.0
+
       - name: Cargo Publish Dry-Run
-        run: ./internal/scripts/release/crates_io_publish_script.sh dry-run
+        run: ./internal/scripts/release/crates_io_publish_script.sh dry-run-allow-dirty
 
   grcov:
     needs: [preflight-check, static-code-analysis]
@@ -893,9 +946,9 @@ jobs:
           sudo groupadd testgroup2
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@888c2e1ea69ab0d4330cbf0af1ecc7b68f368cc1 # ratchet:dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # ratchet:dtolnay/rust-toolchain@v1
         with:
-          toolchain: 1.86.0
+          toolchain: 1.92.0
           components: llvm-tools
 
       - name: Setup gcovr
@@ -903,7 +956,7 @@ jobs:
         with:
           python-version: "3.13"
           cache: "pip" # caching pip dependencies
-      - run: pip install gcovr
+      - run: pip install -I gcovr==8.4
 
       - name: Download artifact grcov
         uses: ./.github/actions/download-cached-rust-tool

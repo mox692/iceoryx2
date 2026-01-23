@@ -10,10 +10,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-extern crate iceoryx2_loggers;
+extern crate iceoryx2_bb_loggers;
 
-use std::cell::UnsafeCell;
-
+use iceoryx2_bb_concurrency::cell::UnsafeCell;
 use iceoryx2_bb_container::string::*;
 use iceoryx2_bb_elementary::bump_allocator::BumpAllocator;
 use iceoryx2_bb_elementary_traits::allocator::AllocationError;

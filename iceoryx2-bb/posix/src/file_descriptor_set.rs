@@ -17,7 +17,7 @@
 //! # Example
 //!
 //! ```ignore
-//! # extern crate iceoryx2_loggers;
+//! # extern crate iceoryx2_bb_loggers;
 //!
 //! use iceoryx2_bb_posix::file_descriptor_set::*;
 //! use iceoryx2_bb_posix::unix_datagram_socket::*;
@@ -46,7 +46,7 @@
 //!     |fd| println!("Fd was triggered {}", unsafe { fd.native_handle() })).unwrap();
 //! ```
 
-use core::{cell::UnsafeCell, fmt::Debug, time::Duration};
+use core::{fmt::Debug, time::Duration};
 
 use alloc::vec;
 use alloc::vec::Vec;
@@ -55,6 +55,7 @@ use crate::{
     clock::AsTimeval,
     file_descriptor::{FileDescriptor, FileDescriptorBased},
 };
+use iceoryx2_bb_concurrency::cell::UnsafeCell;
 use iceoryx2_log::fail;
 use iceoryx2_pal_posix::posix::{errno::Errno, MemZeroedStruct};
 use iceoryx2_pal_posix::*;
@@ -160,7 +161,7 @@ impl FileDescriptorSet {
     }
 
     /// Adds a file descriptor
-    pub fn add<'set, 'fd, F: SynchronousMultiplexing>(
+    pub fn add<'set, 'fd, F: SynchronousMultiplexing + ?Sized>(
         &'set self,
         fd: &'fd F,
     ) -> Result<FileDescriptorSetGuard<'set, 'fd>, FileDescriptorSetAddError> {

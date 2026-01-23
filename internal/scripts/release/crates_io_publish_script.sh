@@ -21,6 +21,7 @@ C_YELLOW='\033[1;33m'
 C_BLUE='\033[1;34m'
 
 DO_DRY_RUN=false
+ALLOW_DIRTY_FLAG=""
 DO_LIST_CRATES_TO_PUBLISH=false
 DO_PUBLISH=false
 DO_SANITY_CHECKS=false
@@ -32,11 +33,13 @@ CRATES_TO_PUBLISH=(
     iceoryx2-pal-posix
     iceoryx2-pal-os-api
     iceoryx2-log-types
-    iceoryx2-loggers
     iceoryx2-log
+    iceoryx2-bb-print
+    iceoryx2-bb-loggers
     iceoryx2-bb-conformance-test-macros
     iceoryx2-bb-elementary-traits
     iceoryx2-bb-testing
+    iceoryx2-bb-concurrency
     iceoryx2-bb-elementary
     iceoryx2-bb-derive-macros
     iceoryx2-bb-container
@@ -64,6 +67,7 @@ CRATES_TO_IGNORE=(
     benchmark-publish-subscribe
     benchmark-request-response
     benchmark-queue
+    component-tests_rust
     example
     iceoryx2-ffi-c
     iceoryx2-ffi-macros
@@ -80,6 +84,11 @@ while (( "$#" )); do
     case "$1" in
         "dry-run")
             DO_DRY_RUN=true
+            shift 1
+            ;;
+        "dry-run-allow-dirty")
+            DO_DRY_RUN=true
+            ALLOW_DIRTY_FLAG="--allow-dirty"
             shift 1
             ;;
         "list-crates-to-publish")
@@ -101,6 +110,7 @@ while (( "$#" )); do
             echo -e "Options:"
             echo -e "    dry-run                 Simulate publishing to crates.io"
             echo -e "                            Only works with Rust >= 1.90"
+            echo -e "    dry-run-allow-dirty     Same as 'dry-run' but with a dirty workspace"
             echo -e "    publish                 Publish to crates.io"
             echo -e "    list-crates-to-publish  List crates to publish to crates.io"
             echo -e "    sanity-checks           Sanity checks for cyclic dependencies and new crates"
@@ -171,7 +181,7 @@ dry_run() {
     for CRATE in "${CRATES_TO_IGNORE[@]}"; do
         EXCLUDE_ARGS+="--exclude $CRATE "
     done
-    cargo publish --dry-run --workspace ${EXCLUDE_ARGS}
+    cargo publish --dry-run --workspace ${EXCLUDE_ARGS} ${ALLOW_DIRTY_FLAG}
 }
 
 list_crates_to_publish() {
@@ -181,13 +191,11 @@ list_crates_to_publish() {
 }
 
 publish() {
-    # NOTE: while 'cargo publish --workspace' is now stable, we still publish
-    #       the crates separately from a known list pro prevent accidentally
-    #       publishing a crate not intended to be published
-    for CRATE in ${CRATES_TO_PUBLISH[@]}; do
-        echo -e "${C_BLUE}${CRATE}${C_OFF}"
-        cargo publish -p ${CRATE}
+    local EXCLUDE_ARGS=""
+    for CRATE in "${CRATES_TO_IGNORE[@]}"; do
+        EXCLUDE_ARGS+="--exclude $CRATE "
     done
+    cargo publish --workspace ${EXCLUDE_ARGS}
 }
 
 if [[ ${DO_SANITY_CHECKS} == true ]]; then

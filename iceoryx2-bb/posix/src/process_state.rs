@@ -19,7 +19,7 @@
 //! ## Application (That Shall Be Monitored)
 //!
 //! ```
-//! # extern crate iceoryx2_loggers;
+//! # extern crate iceoryx2_bb_loggers;
 //!
 //! use iceoryx2_bb_posix::process_state::*;
 //!
@@ -73,7 +73,7 @@
 //! ## Watchdog (Process That Monitors The State Of Other Processes)
 //!
 //! ```
-//! # extern crate iceoryx2_loggers;
+//! # extern crate iceoryx2_bb_loggers;
 //!
 //! use iceoryx2_bb_posix::process_state::*;
 //!
@@ -117,7 +117,7 @@
 //! ## Cleanup (Process That Removes Stale Resources)
 //!
 //! ```
-//! # extern crate iceoryx2_loggers;
+//! # extern crate iceoryx2_bb_loggers;
 //!
 //! use iceoryx2_bb_posix::process_state::*;
 //!
@@ -139,9 +139,11 @@ use alloc::format;
 use core::fmt::Debug;
 
 pub use iceoryx2_bb_container::semantic_string::SemanticString;
+pub use iceoryx2_bb_system_types::file_path::FilePath;
+
+use iceoryx2_bb_concurrency::cell::Cell;
 use iceoryx2_bb_container::semantic_string::SemanticStringError;
 use iceoryx2_bb_elementary::enum_gen;
-pub use iceoryx2_bb_system_types::file_path::FilePath;
 use iceoryx2_log::{fail, trace};
 use iceoryx2_pal_posix::posix::{self, Errno, MemZeroedStruct};
 
@@ -238,7 +240,7 @@ pub enum ProcessCleanerCreateError {
 
 /// The builder of the [`ProcessGuard`]
 /// ```
-/// # extern crate iceoryx2_loggers;
+/// # extern crate iceoryx2_bb_loggers;
 ///
 /// use iceoryx2_bb_posix::process_state::*;
 ///
@@ -297,7 +299,7 @@ impl ProcessGuardBuilder {
     /// `path`s.
     ///
     /// ```
-    /// # extern crate iceoryx2_loggers;
+    /// # extern crate iceoryx2_bb_loggers;
     ///
     /// use iceoryx2_bb_posix::process_state::*;
     ///
@@ -489,7 +491,7 @@ impl ProcessGuardBuilder {
 /// is in scope. When it goes out of scope the process is no longer monitorable.
 ///
 /// ```
-/// # extern crate iceoryx2_loggers;
+/// # extern crate iceoryx2_bb_loggers;
 /// use iceoryx2_bb_posix::process_state::*;
 ///
 /// let process_state_path = FilePath::new(b"process_state_file").unwrap();
@@ -581,7 +583,7 @@ impl ProcessGuard {
 /// # Example
 ///
 /// ```
-/// # extern crate iceoryx2_loggers;
+/// # extern crate iceoryx2_bb_loggers;
 ///
 /// use iceoryx2_bb_posix::process_state::*;
 ///
@@ -625,7 +627,7 @@ impl ProcessGuard {
 /// }
 /// ```
 pub struct ProcessMonitor {
-    file: core::cell::Cell<Option<File>>,
+    file: Cell<Option<File>>,
     path: FilePath,
     owner_lock_path: FilePath,
 }
@@ -648,7 +650,7 @@ impl ProcessMonitor {
     /// # Example
     ///
     /// ```
-    /// # extern crate iceoryx2_loggers;
+    /// # extern crate iceoryx2_bb_loggers;
     ///
     /// use iceoryx2_bb_posix::process_state::*;
     ///
@@ -668,7 +670,7 @@ impl ProcessMonitor {
         };
 
         let new_self = Self {
-            file: core::cell::Cell::new(None),
+            file: Cell::new(None),
             path: *path,
             owner_lock_path,
         };
@@ -687,7 +689,7 @@ impl ProcessMonitor {
     /// # Example
     ///
     /// ```
-    /// # extern crate iceoryx2_loggers;
+    /// # extern crate iceoryx2_bb_loggers;
     ///
     /// use iceoryx2_bb_posix::process_state::*;
     ///
@@ -847,7 +849,7 @@ impl ProcessMonitor {
 /// [`ProcessCleaner`] guard can be acquired by another process again.
 ///
 /// ```no_run
-/// # extern crate iceoryx2_loggers;
+/// # extern crate iceoryx2_bb_loggers;
 ///
 /// use iceoryx2_bb_posix::process_state::*;
 ///

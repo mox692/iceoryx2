@@ -19,7 +19,7 @@
 //! ## Callbacks for signals
 //!
 //! ```
-//! # extern crate iceoryx2_loggers;
+//! # extern crate iceoryx2_bb_loggers;
 //!
 //! use iceoryx2_bb_posix::signal::*;
 //!
@@ -38,7 +38,7 @@
 //! ## Perform tasks until CTRL+c was pressed.
 //!
 //! ```no_run
-//! # extern crate iceoryx2_loggers;
+//! # extern crate iceoryx2_bb_loggers;
 //!
 //! use iceoryx2_bb_posix::signal::*;
 //!
@@ -52,7 +52,7 @@
 //! ## Wait until CTRL+c was pressed.
 //!
 //! ```no_run
-//! # extern crate iceoryx2_loggers;
+//! # extern crate iceoryx2_bb_loggers;
 //!
 //! use iceoryx2_bb_posix::signal::*;
 //!
@@ -73,11 +73,11 @@ use crate::{
     clock::{ClockType, NanosleepError, Time, TimeError},
     mutex::*,
 };
-use core::sync::atomic::Ordering;
 use enum_iterator::{all, Sequence};
+use iceoryx2_bb_concurrency::atomic::AtomicUsize;
+use iceoryx2_bb_concurrency::atomic::Ordering;
 use iceoryx2_bb_elementary::enum_gen;
 use iceoryx2_log::{fail, fatal_panic};
-use iceoryx2_pal_concurrency_sync::iox_atomic::IoxAtomicUsize;
 use iceoryx2_pal_posix::posix::{Errno, MemZeroedStruct};
 use iceoryx2_pal_posix::*;
 use lazy_static::lazy_static;
@@ -277,7 +277,7 @@ impl Drop for SignalGuard {
 }
 
 #[cfg(not(all(test, loom, feature = "std")))]
-static LAST_SIGNAL: IoxAtomicUsize = IoxAtomicUsize::new(posix::MAX_SIGNAL_VALUE);
+static LAST_SIGNAL: AtomicUsize = AtomicUsize::new(posix::MAX_SIGNAL_VALUE);
 
 #[cfg(all(test, loom, feature = "std"))]
 static LAST_SIGNAL: std::sync::LazyLock<IoxAtomicUsize> = std::sync::LazyLock::new(|| {
@@ -341,7 +341,7 @@ impl SignalHandler {
     /// signal guard goes out of scope the callback is unregistered.
     ///
     /// ```
-    /// # extern crate iceoryx2_loggers;
+    /// # extern crate iceoryx2_bb_loggers;
     ///
     /// use iceoryx2_bb_posix::signal::*;
     ///
@@ -425,7 +425,7 @@ impl SignalHandler {
 
     /// Blocks until the provided signal was raised or an error occurred.
     /// ```no_run
-    /// # extern crate iceoryx2_loggers;
+    /// # extern crate iceoryx2_bb_loggers;
     ///
     /// use iceoryx2_bb_posix::signal::*;
     ///
@@ -461,7 +461,7 @@ impl SignalHandler {
     /// Blocks until the provided signal was raised or the timeout was reached. If the signal was
     /// raised it returns true otherwise false.
     /// ```ignore
-    /// # extern crate iceoryx2_loggers;
+    /// # extern crate iceoryx2_bb_loggers;
     ///
     /// use iceoryx2_bb_posix::signal::*;
     /// use core::time::Duration;
@@ -543,7 +543,7 @@ impl SignalHandler {
 
     fn new() -> Self {
         let mut sighandle = SignalHandler {
-            registered_signals: core::array::from_fn(|_| None),
+            registered_signals: [const { None }; posix::MAX_SIGNAL_VALUE],
             do_repeat_eintr_call: false,
         };
 
@@ -633,5 +633,11 @@ impl SignalHandler {
 
         self.registered_signals[detail.signal as usize] = None;
         self.register_signal_from_state(detail);
+    }
+
+    pub fn abort() {
+        unsafe {
+            iceoryx2_pal_posix::posix::abort();
+        }
     }
 }

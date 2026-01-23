@@ -18,7 +18,7 @@
 ###############################################################################
 module(
     name = "iceoryx2",
-    version = "0.7.0",
+    version = "0.8.999",
 )
 
 bazel_dep(name = "bazel_features", version = "1.30.0")
@@ -62,10 +62,12 @@ crate.from_cargo(
         "//:iceoryx2-tunnel/conformance-tests/Cargo.toml",
         "//:iceoryx2-services/discovery/Cargo.toml",
         "//:iceoryx2-log/log/Cargo.toml",
-        "//:iceoryx2-log/loggers/Cargo.toml",
         "//:iceoryx2-log/types/Cargo.toml",
         "//:iceoryx2/Cargo.toml",
         "//:iceoryx2/conformance-tests/Cargo.toml",
+        "//:iceoryx2-bb/print/Cargo.toml",
+        "//:iceoryx2-bb/loggers/Cargo.toml",
+        "//:iceoryx2-bb/concurrency/Cargo.toml",
         "//:iceoryx2-bb/conformance-test-macros/Cargo.toml",
         "//:iceoryx2-bb/container/Cargo.toml",
         "//:iceoryx2-bb/derive-macros/Cargo.toml",

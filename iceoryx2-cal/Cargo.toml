@@ -14,25 +14,34 @@ version = { workspace = true }
 default = [
   "lazy_static/spin_no_std"
 ]
-std = []
+std = [
+  "iceoryx2-bb-concurrency/std"
+]
 
 # The permissions of all resources will be set to read, write, execute for everyone.
 # This shall not be used in production and is meant to be enabled in a docker environment
 # with inconsistent user configuration.
 dev_permissions = []
 
+# Use https://crates.io/crates/libc for the platform abstraction. This simplifies
+# cross-compilation since bindgen is not required anymore. Unfortunately, the libc crate
+# does not offer all the functionality iceoryx2 requires on all of the supported
+# platforms. Therefore, only a subset of the supported platforms will work with this
+# feature flag.
+libc_platform = ["iceoryx2-bb-linux/libc_platform", "iceoryx2-bb-posix/libc_platform"]
+
 [dependencies]
+iceoryx2-log = { workspace = true }
 iceoryx2-bb-posix = { workspace = true }
 iceoryx2-bb-linux = { workspace = true }
+iceoryx2-bb-concurrency = { workspace = true }
 iceoryx2-bb-container = { workspace = true }
 iceoryx2-bb-derive-macros = { workspace = true }
 iceoryx2-bb-system-types = { workspace = true }
-iceoryx2-log = { workspace = true }
 iceoryx2-bb-elementary = { workspace = true }
 iceoryx2-bb-elementary-traits = { workspace = true }
 iceoryx2-bb-memory = { workspace = true }
 iceoryx2-bb-lock-free = { workspace = true }
-iceoryx2-pal-concurrency-sync = { workspace = true }
 
 lazy_static = { workspace = true }
 postcard = { workspace = true }
@@ -43,5 +52,5 @@ tiny-fn = { workspace = true }
 
 [dev-dependencies]
 iceoryx2-bb-testing = { workspace = true }
-iceoryx2-loggers = { workspace = true }
+iceoryx2-bb-loggers = { workspace = true }
 generic-tests = { workspace = true }

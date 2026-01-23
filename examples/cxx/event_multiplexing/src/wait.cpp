@@ -13,7 +13,8 @@
 #include <iostream>
 #include <map>
 
-#include "iox2/container/static_vector.hpp"
+#include "iox2/bb/static_string.hpp"
+#include "iox2/bb/static_vector.hpp"
 #include "iox2/iceoryx2.hpp"
 #include "parse_args.hpp"
 
@@ -35,18 +36,24 @@ auto main(int argc, char** argv) -> int {
 
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers) fine for the example
     const CliOption<256> option_service_1 {
-        "-s", "--service1", "fuu", "Invalid parameter! The service must be passed after '-s' or '--service2'"
+        "-s",
+        "--service1",
+        iox2::bb::StaticString<256>::from_utf8_unchecked("fuu"),
+        "Invalid parameter! The service must be passed after '-s' or '--service2'"
     };
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers) fine for the example
     const CliOption<256> option_service_2 {
-        "-t", "--service2", "bar", "Invalid parameter! The service must be passed after '-t' or '--service2'"
+        "-t",
+        "--service2",
+        iox2::bb::StaticString<256>::from_utf8_unchecked("bar"),
+        "Invalid parameter! The service must be passed after '-t' or '--service2'"
     };
 
     auto service_name_arg_1 = parse_from_args(argc, argv, option_service_1);
     auto service_name_arg_2 = parse_from_args(argc, argv, option_service_2);
 
-    auto service_name_1 = ServiceName::create(service_name_arg_1.c_str()).value();
-    auto service_name_2 = ServiceName::create(service_name_arg_2.c_str()).value();
+    auto service_name_1 = ServiceName::create(service_name_arg_1.unchecked_access().c_str()).value();
+    auto service_name_2 = ServiceName::create(service_name_arg_2.unchecked_access().c_str()).value();
 
     // create node and services
     auto node = NodeBuilder().create<ServiceType::Ipc>().value();
@@ -59,7 +66,7 @@ auto main(int argc, char** argv) -> int {
     // create the waitset and attach the listeners to it
     auto waitset = WaitSetBuilder().create<ServiceType::Ipc>().value();
     // NOLINTNEXTLINE(misc-const-correctness) false positive
-    iox2::container::StaticVector<WaitSetGuard<ServiceType::Ipc>, 2> guards;
+    iox2::bb::StaticVector<WaitSetGuard<ServiceType::Ipc>, 2> guards;
 
     guards.try_emplace_back(waitset.attach_notification(listener_1).value());
     guards.try_emplace_back(waitset.attach_notification(listener_2).value());

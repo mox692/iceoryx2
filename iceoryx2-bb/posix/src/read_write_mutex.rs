@@ -17,7 +17,7 @@
 //! # Example
 //!
 //! ```no_run
-//! # extern crate iceoryx2_loggers;
+//! # extern crate iceoryx2_bb_loggers;
 //!
 //! use iceoryx2_bb_posix::read_write_mutex::*;
 //! use std::thread;
@@ -51,13 +51,13 @@ pub use crate::ipc_capable::{Handle, IpcCapable};
 
 use core::marker::PhantomData;
 use core::{
-    cell::UnsafeCell,
     fmt::Debug,
     ops::{Deref, DerefMut},
 };
 
 use alloc::format;
 
+use iceoryx2_bb_concurrency::cell::UnsafeCell;
 use iceoryx2_bb_elementary::{enum_gen, scope_guard::ScopeGuardBuilder};
 use iceoryx2_log::{fail, fatal_panic, warn};
 use iceoryx2_pal_posix::posix::errno::Errno;

@@ -15,7 +15,7 @@
 //!
 //! # Example
 //! ```
-//! # extern crate iceoryx2_loggers;
+//! # extern crate iceoryx2_bb_loggers;
 //! use iceoryx2_bb_memory::one_chunk_allocator::*;
 //!
 //! const MEMORY_SIZE: usize = 1024;
@@ -44,19 +44,22 @@
 //! unsafe{ allocator.deallocate(NonNull::new(grown_memory.as_mut().as_mut_ptr()).unwrap(),
 //!                              Layout::from_size_align_unchecked(32, 4))};
 //! ```
-use core::sync::atomic::Ordering;
-use iceoryx2_log::fail;
-use iceoryx2_pal_concurrency_sync::iox_atomic::IoxAtomicUsize;
 
 pub use core::alloc::Layout;
+
+use iceoryx2_bb_concurrency::atomic::Ordering;
+
+use iceoryx2_bb_concurrency::atomic::AtomicUsize;
 use iceoryx2_bb_elementary::math::align;
+use iceoryx2_log::fail;
+
 pub use iceoryx2_bb_elementary_traits::allocator::*;
 
 #[derive(Debug)]
 pub struct OneChunkAllocator {
     start: usize,
     size: usize,
-    allocated_chunk_start: IoxAtomicUsize,
+    allocated_chunk_start: AtomicUsize,
 }
 
 impl OneChunkAllocator {
@@ -64,7 +67,7 @@ impl OneChunkAllocator {
         OneChunkAllocator {
             start: ptr.as_ptr() as usize,
             size,
-            allocated_chunk_start: IoxAtomicUsize::new(0),
+            allocated_chunk_start: AtomicUsize::new(0),
         }
     }
 

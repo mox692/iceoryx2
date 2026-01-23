@@ -19,7 +19,7 @@
 //! [`set_log_level()`] and read via [`get_log_level()`].
 //!
 //! The API includes convinience macros to combine error/panic handling
-//! directly with a logger selected from the `iceoryx2_loggers` crate.
+//! directly with a logger selected from the `iceoryx2_bb_loggers` crate.
 //! The [`fail!`] macro can return when the function which was called return an
 //! error containing result.
 //! The [`fatal_panic!`] macro calls [`panic!`].
@@ -130,9 +130,9 @@ pub use from_env::{set_log_level_from_env_or, set_log_level_from_env_or_default}
 // Re-export so library crates need only depend on this crate
 pub use iceoryx2_log_types::{Log, LogLevel};
 
-use core::sync::atomic::Ordering;
-
-use iceoryx2_pal_concurrency_sync::{iox_atomic::IoxAtomicU8, once::Once};
+use iceoryx2_pal_concurrency_sync::atomic::AtomicU8;
+use iceoryx2_pal_concurrency_sync::atomic::Ordering;
+use iceoryx2_pal_concurrency_sync::once::Once;
 
 mod fail;
 mod log;
@@ -142,7 +142,7 @@ const DEFAULT_LOG_LEVEL: LogLevel = LogLevel::Info;
 static mut LOGGER: Option<&'static dyn Log> = None;
 
 #[cfg(not(all(test, loom, feature = "std")))]
-static LOG_LEVEL: IoxAtomicU8 = IoxAtomicU8::new(DEFAULT_LOG_LEVEL as u8);
+static LOG_LEVEL: AtomicU8 = AtomicU8::new(DEFAULT_LOG_LEVEL as u8);
 #[cfg(all(test, loom, feature = "std"))]
 static LOG_LEVEL: std::sync::LazyLock<IoxAtomicU8> = std::sync::LazyLock::new(|| {
     unimplemented!("loom does not provide const-initialization for atomic variables.")
@@ -256,36 +256,4 @@ pub fn __internal_print_log_msg(
 
 extern "Rust" {
     fn __internal_default_logger() -> &'static dyn Log;
-}
-
-// TODO: Move this somewhere else ...
-// TODO(#1127): Add proper printing abstraction that can be implemented for no_std platforms
-#[cfg(feature = "std")]
-#[macro_export]
-macro_rules! cout {
-    ($($arg:tt)*) => {
-        std::println!($($arg)*)
-    };
-}
-#[cfg(feature = "std")]
-#[macro_export]
-macro_rules! cerr {
-    ($($arg:tt)*) => {
-        std::eprintln!($($arg)*)
-    };
-}
-
-#[cfg(not(feature = "std"))]
-#[macro_export]
-macro_rules! cout {
-    ($($arg:tt)*) => {{
-        let _ = format_args!($($arg)*);
-    }};
-}
-#[cfg(not(feature = "std"))]
-#[macro_export]
-macro_rules! cerr {
-    ($($arg:tt)*) => {{
-        let _ = format_args!($($arg)*);
-    }};
 }

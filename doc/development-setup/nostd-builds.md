@@ -50,7 +50,7 @@ To build for `no_std` targets with Bazel, disable every feature requiring
 `std`:
 
 ```console
-USE_BAZEL_VERSION=7.x bazel build //iceoryx2/... --//:feature_std=off --//:feature_logger_file=off --//:feature_logger_console=off --//:feature_logger_buffer=off --//:feature_logger_log=off --//:feature_logger_tracing=off
+USE_BAZEL_VERSION=7.x bazel build //iceoryx2/... --//:feature_std=off
 ```
 
 ## Dependency
@@ -62,12 +62,19 @@ For crates intended for platforms with `std` support, enable the `std` feature
 in the `Cargo.toml`:
 
 ```toml
-iceoryx2 = { version = "0.7.0", default-features = false, features = ["std"] }
+iceoryx2 = { version = "x.y.z", default-features = false, features = ["std"] }
 ```
 
 For crates intended for platform without `std` support, disable the `std`
 feature in the `Cargo.toml`:
 
 ```toml
-iceoryx2 = { version = "0.7.0", default-features = false }
+iceoryx2 = { version = "x.y.z", default-features = false }
+```
+
+In addition, the logger must be configured by enabling the appropriate feature
+for your platform, for example:
+
+```toml
+iceoryx2=loggers = { version = "x.y.z", features = ["bare_metal"] }
 ```

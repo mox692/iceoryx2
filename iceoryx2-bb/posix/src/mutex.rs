@@ -15,7 +15,7 @@
 //! # Example
 //!
 //! ```ignore
-//! # extern crate iceoryx2_loggers;
+//! # extern crate iceoryx2_bb_loggers;
 //!
 //! use iceoryx2_bb_posix::mutex::*;
 //! use core::time::Duration;
@@ -49,11 +49,13 @@
 pub use crate::ipc_capable::{Handle, IpcCapable};
 
 use crate::ipc_capable::internal::{Capability, HandleStorage, IpcConstructible};
-use core::cell::UnsafeCell;
+
 use core::fmt::Debug;
 use core::marker::PhantomData;
 use core::ops::{Deref, DerefMut};
 use core::time::Duration;
+
+use iceoryx2_bb_concurrency::cell::UnsafeCell;
 use iceoryx2_bb_elementary::scope_guard::*;
 use iceoryx2_log::{fail, fatal_panic, warn};
 use iceoryx2_pal_posix::posix::MemZeroedStruct;
@@ -166,7 +168,7 @@ impl From<MutexCreationError> for MutexError {
 /// # Example
 ///
 /// ```
-/// extern crate iceoryx2_loggers;
+/// extern crate iceoryx2_bb_loggers;
 ///
 /// use iceoryx2_bb_posix::mutex::*;
 ///
@@ -477,7 +479,7 @@ impl<T: Sized + Debug> MutexHandle<T> {
 /// For a detailed builder example, see [`MutexBuilder`].
 ///
 /// ```
-/// extern crate iceoryx2_loggers;
+/// extern crate iceoryx2_bb_loggers;
 ///
 /// use iceoryx2_bb_posix::mutex::*;
 /// use core::time::Duration;

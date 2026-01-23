@@ -88,12 +88,7 @@ print_manual_steps_hint() {
     echo -e "* Test if Yocto builds and runs with the current codebase"
     echo -e "* check if the new features are marked as done, e.g. README, ROADMAP, etc."
     echo -e "* grep for 'planned'"
-    echo -e "* verify to be on the right branch"
-}
-
-print_check_code_examples() {
-    echo -e "* '\$GIT_ROOT$/README.MD'"
-    echo -e "* '\$GIT_ROOT$/internal/cpp_doc_generator/*.rst'"
+    echo -e "* verify to be on the right branch, e.g. 'main' or 'release-x.y'"
 }
 
 print_sanity_checks() {
@@ -126,6 +121,10 @@ print_set_new_version_number() {
     echo -e "  * internal/VERSIONS"
 }
 
+print_do_crates_io_publishing_dry_run() {
+    echo -e "Do a 'cargo publish --dry-run'"
+}
+
 print_merge_all_changes_to_main_and_create_release_branch() {
     echo -e "Congratulations! You made it!"
     echo -e "Please commit all the changes and create a pull request to 'main'!"
@@ -143,9 +142,6 @@ print_howto() {
     print_step "Check Manual Steps"
     print_manual_steps_hint
 
-    print_step "Check the Code examples in the documentation"
-    print_check_code_examples
-
     print_step "Sanity checks for crates.io release"
     print_sanity_checks
 
@@ -157,6 +153,9 @@ print_howto() {
 
     print_step "Set New Version Number"
     print_set_new_version_number
+
+    print_step "Do dry-run publish to crates.io"
+    print_do_crates_io_publishing_dry_run
 
     print_step "Merge all changes to 'main' and Create Release Branch"
     print_merge_all_changes_to_main_and_create_release_branch
@@ -178,6 +177,7 @@ while (( "$#" )); do
             echo -e ""
             echo -e "Usage: ${C_GREEN}$(basename $0)${C_OFF} --new-version 0.8.15"
             echo -e "Options:"
+            echo -e "    howto                          Prints the how to release iceoryx2 guide"
             echo -e "    --new-version <VERSION>        The release <VERSION> in the format X.Y.Z"
             echo -e ""
             exit 0
@@ -208,7 +208,7 @@ show_default_selector() {
                 SELECTION=${SKIP}
                 break;
                 ;;
-            *) echo -e "${C_YELLOW}Please use either 'Y', 'N' or 'S'.${C_OFF}";;
+            *) echo -e "${C_YELLOW}Please use either 'Y', 'C' or 'S'.${C_OFF}";;
         esac
     done
 }
@@ -241,10 +241,6 @@ show_default_selector print_article_hint
 
 print_step "Check Manual Steps"
 print_manual_steps_hint
-show_default_selector
-
-print_step "Did you check the Code examples in the documentation?"
-print_check_code_examples
 show_default_selector
 
 print_step "Sanity checks"
@@ -303,7 +299,6 @@ if [[ ${SELECTION} == ${YES} ]]; then
     show_completion
 fi
 
-
 print_step "Set New Version Number"
 echo -e "Shall the ${C_YELLOW}${ICEORYX2_RELEASE_VERSION}${C_OFF} release version be set in all files?"
 show_default_selector
@@ -321,6 +316,10 @@ if [[ ${SELECTION} == ${YES} ]]; then
     git add .
 
     echo -e "Did you build with cargo, bazel and also the python bindings to update the corresponding lock files?"
+    echo -e ""
+    echo -e "cargo:  cargo build --all-targets"
+    echo -e "bazel:  USE_BAZEL_VERSION=7.4.1 bazelisk build //..."
+    echo -e "python: maturin build --manifest-path=iceoryx2-ffi/python/Cargo.toml"
     show_default_selector
 
     echo -e "Shall the changes be commited?"
@@ -328,6 +327,15 @@ if [[ ${SELECTION} == ${YES} ]]; then
     if [[ ${SELECTION} == ${YES} ]]; then
         git commit -m"[#77] Update version number to v${ICEORYX2_RELEASE_VERSION}"
     fi
+
+    show_completion
+fi
+
+print_step "Do crates.io publishing dry-run"
+echo -e "Shall a publishing dry-run be performed?"
+show_default_selector
+if [[ ${SELECTION} == ${YES} ]]; then
+    internal/scripts/release/crates_io_publish_script.sh dry-run
 
     show_completion
 fi

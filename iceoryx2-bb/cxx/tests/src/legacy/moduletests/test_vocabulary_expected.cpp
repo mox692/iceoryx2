@@ -14,7 +14,6 @@
 
 #include "iox2/legacy/detail/hoofs_error_reporting.hpp"
 #include "iox2/legacy/expected.hpp"
-#include "iox2/legacy/string.hpp"
 
 #include "iox2/legacy/testing/fatal_failure.hpp"
 
@@ -670,24 +669,6 @@ TEST_F(expected_test, ConvertNonEmptyErrorResultVoidValueTypeResultIsSuccessful)
     expected<void, TestError> sut2 = sut;
     EXPECT_THAT(sut2.has_error(), Eq(true));
     EXPECT_THAT(sut2.error(), Eq(TestError::ERROR2));
-}
-
-TEST_F(expected_test, ExpectedWithValueConvertsToOptionalWithValue) {
-    ::testing::Test::RecordProperty("TEST_ID", "a877f9bd-5793-437f-8dee-a109aed9f647");
-    constexpr int VALUE = 4711;
-    expected<int, TestError> sut { ok(VALUE) };
-    optional<int> value = sut.to_optional();
-
-    ASSERT_THAT(value.has_value(), Eq(true));
-    EXPECT_THAT(*value, Eq(VALUE));
-}
-
-TEST_F(expected_test, ExpectedWithErrorConvertsToOptionalWithoutValue) {
-    ::testing::Test::RecordProperty("TEST_ID", "fe161275-8fa2-43c9-86e7-0a20d79eb44f");
-    expected<int, TestError> sut { err(TestError::ERROR1) };
-    optional<int> value = sut.to_optional();
-
-    ASSERT_THAT(value.has_value(), Eq(false));
 }
 
 TEST_F(expected_test, MoveAssignmentIsNotEnforcedInMoveConstructor) {
